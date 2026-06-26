@@ -4,7 +4,7 @@ import time
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.agents.base import log_research, make_agent
+from app.agents.base import log_research, make_agent, run_agent_with_retry
 from app.database import AsyncSessionLocal
 from app.models.opportunity import Opportunity
 from app.models.company import Company
@@ -65,7 +65,7 @@ Skills Required: {", ".join(opp.skills_required or [])}
 Design a proof-of-work mini-project for this specific opportunity.
 """
 
-    result = await _agent.run(prompt)
+    result = await run_agent_with_retry(_agent, prompt)
     idea = result.output
     duration_ms = int((time.time() - start) * 1000)
 

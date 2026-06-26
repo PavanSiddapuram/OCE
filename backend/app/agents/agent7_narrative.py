@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.agents.base import log_research, make_agent
+from app.agents.base import log_research, make_agent, run_agent_with_retry
 from app.database import AsyncSessionLocal
 from app.models.company import Company
 from app.models.contact import Contact
@@ -97,7 +97,7 @@ Write outreach messages for LinkedIn, email, and Twitter DM.
 Reference the founder's complaint in the hook. Reference the PoW project in what_i_built.
 """
 
-    result = await _agent.run(prompt)
+    result = await run_agent_with_retry(_agent, prompt)
     messages = result.output.outreach_messages
     duration_ms = int((time.time() - start) * 1000)
 

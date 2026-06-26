@@ -21,6 +21,7 @@ dependencies = [
     "firecrawl-py>=1.3.0",
     "httpx>=0.27.0",
     "python-multipart>=0.0.9",
+    "slowapi>=0.1.9",
 ]
 
 [tool.hatch.build.targets.wheel]

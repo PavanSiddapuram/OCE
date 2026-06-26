@@ -5,7 +5,7 @@ import uuid
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.agents.base import log_research, make_agent
+from app.agents.base import log_research, make_agent, run_agent_with_retry
 from app.database import AsyncSessionLocal
 from app.models.company import Company
 from app.models.founder import Founder
@@ -92,7 +92,7 @@ Research content:
 Extract founder profiles with specific complaints and key insights.
 """
 
-    result = await _agent.run(prompt)
+    result = await run_agent_with_retry(_agent, prompt)
     profiles = result.output.founders
     duration_ms = int((time.time() - start) * 1000)
 
