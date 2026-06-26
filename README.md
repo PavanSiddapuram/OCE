@@ -209,7 +209,7 @@ docker compose up
 - [x] Phase 4: Agents 4 + 5 — skill matching + proof-of-work generation
 - [x] Phase 5: Agents 6 + 7 + 8 — founder research + narrative + CRM
 - [x] Phase 6: Frontend — all pages, Kanban board, copy buttons, React Query polling
-- [ ] Phase 7: Hardening — rate limiting, retries, dedup, error states
+- [x] Phase 7: Hardening — rate limiting, retries, dedup, error states
 
 ---
 

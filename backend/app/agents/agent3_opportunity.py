@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.agents.base import log_research, make_agent
+from app.agents.base import log_research, make_agent, run_agent_with_retry
 from app.database import AsyncSessionLocal
 from app.models.company import Company
 from app.models.opportunity import Opportunity
@@ -68,7 +68,7 @@ Sector: {company.sector}
 Identify 3-5 specific opportunities for a software engineer at this company.
 """
 
-    result = await _agent.run(prompt)
+    result = await run_agent_with_retry(_agent, prompt)
     opportunities = result.output.opportunities
     duration_ms = int((time.time() - start) * 1000)
 

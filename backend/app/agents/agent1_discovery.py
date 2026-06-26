@@ -1,11 +1,12 @@
 """Agent 1: Startup Discovery — finds real startups from YC, Accel, Peak XV, Blume, etc."""
 import time
 import uuid
+from urllib.parse import urlparse
 
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.agents.base import log_research, make_agent
+from app.agents.base import log_research, make_agent, run_agent_with_retry
 from app.database import AsyncSessionLocal
 from app.models.company import Company
 from app.tools.tavily_tool import tavily_search
@@ -38,6 +39,16 @@ Rules:
 )
 
 
+def _normalize_domain(url: str) -> str:
+    """Return bare domain (no scheme, no www, no trailing slash) for dedup."""
+    try:
+        parsed = urlparse(url if "://" in url else f"https://{url}")
+        domain = parsed.netloc or parsed.path
+        return domain.lower().removeprefix("www.")
+    except Exception:
+        return url.lower()
+
+
 async def run_discovery(city: str, sector: str, max_companies: int, pipeline_run_id: str) -> list[uuid.UUID]:
     """Run Agent 1. Returns list of company UUIDs inserted into DB."""
     start = time.time()
@@ -65,18 +76,27 @@ Search results (title, url, snippet):
 Extract up to {max_companies} distinct startups matching the city and sector filters.
 """
 
-    result = await _agent.run(prompt)
+    result = await run_agent_with_retry(_agent, prompt)
     companies = result.output.companies[:max_companies]
 
     duration_ms = int((time.time() - start) * 1000)
     inserted_ids: list[uuid.UUID] = []
 
+    # Pre-load all existing domains for O(1) dedup without per-row DB round trips
     async with AsyncSessionLocal() as db:
+        existing_rows = await db.execute(select(Company.website))
+        existing_domains: set[str] = {
+            _normalize_domain(w) for w in existing_rows.scalars().all() if w
+        }
+
+        # Second-pass dedup within the batch returned by the LLM
+        seen_in_batch: set[str] = set()
+
         for stub in companies:
-            # Deduplication: skip if website already in DB
-            existing = await db.execute(select(Company).where(Company.website == stub.website))
-            if existing.scalar_one_or_none():
+            domain = _normalize_domain(stub.website)
+            if domain in existing_domains or domain in seen_in_batch:
                 continue
+            seen_in_batch.add(domain)
 
             company = Company(
                 name=stub.name,
@@ -94,7 +114,6 @@ Extract up to {max_companies} distinct startups matching the city and sector fil
 
         await db.commit()
 
-    # Log research (use a placeholder company_id for the pipeline-level run)
     if inserted_ids:
         await log_research(
             company_id=str(inserted_ids[0]),

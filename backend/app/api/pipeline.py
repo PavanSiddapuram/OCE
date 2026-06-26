@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.main import limiter
 from app.models.pipeline_run import PipelineRun
 from app.schemas.pipeline import PipelineRunRequest, PipelineRunResponse, PipelineStatusResponse
 
@@ -13,13 +13,14 @@ router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 
 @router.post("/run", response_model=PipelineRunResponse)
-async def run_pipeline(request: PipelineRunRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def run_pipeline(request: Request, body: PipelineRunRequest, db: AsyncSession = Depends(get_db)):
     run = PipelineRun(
         filters={
-            "city": request.city,
-            "sector": request.sector,
-            "max_companies": request.max_companies,
-            "resume_text": request.resume_text,
+            "city": body.city,
+            "sector": body.sector,
+            "max_companies": body.max_companies,
+            "resume_text": body.resume_text,
         },
         status="pending",
     )
@@ -27,9 +28,8 @@ async def run_pipeline(request: PipelineRunRequest, db: AsyncSession = Depends(g
     await db.commit()
     await db.refresh(run)
 
-    # Import here to avoid circular import at module load; enqueue ARQ job
     from app.tasks.queue import enqueue_pipeline
-    await enqueue_pipeline(str(run.id), request.model_dump())
+    await enqueue_pipeline(str(run.id), body.model_dump())
 
     return PipelineRunResponse(pipeline_run_id=run.id, status=run.status)
 
