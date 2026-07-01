@@ -1,18 +1,32 @@
-import os
 import uuid
 
+from openai import AsyncOpenAI
 from pydantic_ai import Agent
-from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.config import settings
 from app.database import AsyncSessionLocal
 from app.utils.retry import retry_async
 
+# Single shared async client — DeepSeek is OpenAI-API-compatible
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(
+            api_key=settings.deepseek_api_key,
+            base_url=settings.deepseek_base_url,
+        )
+    return _openai_client
+
 
 def make_agent(system_prompt: str, result_type: type) -> Agent:
-    """Factory for all OCE agents — single model config point."""
-    os.environ.setdefault("ANTHROPIC_API_KEY", settings.anthropic_api_key)
-    model = AnthropicModel(settings.anthropic_model)
+    """Factory for all OCE agents — DeepSeek via OpenAI-compatible provider."""
+    provider = OpenAIProvider(openai_client=_get_client())
+    model = OpenAIModel(settings.deepseek_model, provider=provider)
     return Agent(model=model, system_prompt=system_prompt, output_type=result_type)
 
 
@@ -47,7 +61,7 @@ async def log_research(
             raw_input=raw_input,
             raw_output=raw_output,
             tokens_used=tokens_used,
-            model_used=settings.anthropic_model,
+            model_used=settings.deepseek_model,
             duration_ms=duration_ms,
         )
         db.add(entry)
