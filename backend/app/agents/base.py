@@ -2,7 +2,7 @@ import uuid
 
 from openai import AsyncOpenAI
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.config import settings
@@ -26,7 +26,7 @@ def _get_client() -> AsyncOpenAI:
 def make_agent(system_prompt: str, result_type: type) -> Agent:
     """Factory for all OCE agents — DeepSeek via OpenAI-compatible provider."""
     provider = OpenAIProvider(openai_client=_get_client())
-    model = OpenAIModel(settings.deepseek_model, provider=provider)
+    model = OpenAIChatModel(settings.deepseek_model, provider=provider)
     return Agent(model=model, system_prompt=system_prompt, output_type=result_type)
 
 

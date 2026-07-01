@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.main import limiter
+from app.limiter import limiter
 from app.models.pipeline_run import PipelineRun
 from app.schemas.pipeline import PipelineRunRequest, PipelineRunResponse, PipelineStatusResponse
 
