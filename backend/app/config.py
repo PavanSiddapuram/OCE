@@ -5,9 +5,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://oce:oce_dev@localhost:5432/oce"
     redis_url: str = "redis://localhost:6379"
 
-    # DeepSeek — sole LLM provider for all agents
+    # DeepSeek — sole LLM provider for all 8 agents
+    # "deepseek-chat" is DeepSeek's always-latest alias (V3 today, V4 when released)
+    # Override with DEEPSEEK_MODEL=deepseek-chat in .env to pin a specific version
     deepseek_api_key: str = ""
-    deepseek_model: str = "deepseek-chat"          # DeepSeek-V3
+    deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com"
 
     # External tools
