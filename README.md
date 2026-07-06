@@ -51,7 +51,7 @@ Interview
 Backend          FastAPI + Python 3.11
 Database         PostgreSQL 16
 Queue            Redis 7 + ARQ (async task queue)
-AI               Pydantic AI + Anthropic Claude
+AI               Pydantic AI + DeepSeek V3 (deepseek-chat)
 Search           Tavily (web search)
 Scraping         Firecrawl (website content)
 Doc Reading      Jina Reader (LinkedIn, articles)
@@ -133,7 +133,7 @@ OCE/
 - Docker Desktop
 - Python 3.11+
 - Node.js 20+
-- API keys: Anthropic, Tavily, Firecrawl
+- API keys: DeepSeek, Tavily, Firecrawl
 
 ### 1. Clone and configure
 
