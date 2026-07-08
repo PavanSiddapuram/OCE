@@ -12,6 +12,7 @@ from app.models.opportunity import Opportunity
 
 
 class SkillMatchResult(BaseModel):
+    opportunity_index: int  # 1-based index as numbered in the prompt
     opportunity_title: str
     fit_score: int  # 0-100
     fit_reasoning: str
@@ -37,6 +38,7 @@ Scoring weights:
 - Communication/ownership signals: 10%
 
 For each match, provide:
+- opportunity_index: the number of the opportunity exactly as listed in the prompt (1, 2, 3, ...)
 - opportunity_title: exact title from the opportunity
 - fit_score: integer 0-100
 - fit_reasoning: 2-3 sentences explaining the score
@@ -58,8 +60,8 @@ async def run_skill_match(company_id: str, resume_text: str) -> list[uuid.UUID]:
         return []
 
     opp_descriptions = "\n\n".join(
-        f"Title: {o.title}\nCategory: {o.category}\nDescription: {o.description}\nSkills Required: {', '.join(o.skills_required or [])}"
-        for o in opportunities
+        f"Opportunity {i}:\nTitle: {o.title}\nCategory: {o.category}\nDescription: {o.description}\nSkills Required: {', '.join(o.skills_required or [])}"
+        for i, o in enumerate(opportunities, start=1)
     )
 
     prompt = f"""
@@ -76,11 +78,14 @@ Score each opportunity for fit with this engineer.
     matches = result.output.matches
     duration_ms = int((time.time() - start) * 1000)
 
-    score_map = {m.opportunity_title.lower().strip(): m for m in matches}
+    # Map scores back by 1-based index (robust against the model rephrasing
+    # titles); fall back to title matching for out-of-range indices
+    title_map = {m.opportunity_title.lower().strip(): m for m in matches}
+    index_map = {m.opportunity_index: m for m in matches if 1 <= m.opportunity_index <= len(opportunities)}
 
     async with AsyncSessionLocal() as db:
-        for opp in opportunities:
-            match = score_map.get(opp.title.lower().strip())
+        for i, opp in enumerate(opportunities, start=1):
+            match = index_map.get(i) or title_map.get(opp.title.lower().strip())
             if match:
                 opp.fit_score = match.fit_score
                 opp.fit_reasoning = match.fit_reasoning

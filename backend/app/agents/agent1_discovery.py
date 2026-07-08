@@ -107,6 +107,7 @@ Extract up to {max_companies} distinct startups matching the city and sector fil
                 sector=stub.sector or sector,
                 stage=stub.stage,
                 status="discovered",
+                pipeline_run_id=uuid.UUID(str(pipeline_run_id)),
             )
             db.add(company)
             await db.flush()

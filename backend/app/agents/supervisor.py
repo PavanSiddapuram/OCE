@@ -31,6 +31,9 @@ AGENT_CHAIN: list[tuple[str, str]] = [
 # How long (seconds) before we consider an agent stuck and eligible for rescue
 STUCK_THRESHOLD_SECONDS = 120
 
+# Max rescue re-enqueues per (company, agent) before giving up for good
+SUPERVISOR_RESCUE_LIMIT = 3
+
 
 async def _log_supervision_event(
     company_id: str,
@@ -105,6 +108,25 @@ async def identify_and_rescue(
         logger.error("[SUPERVISOR] No redis pool in ctx — cannot re-enqueue")
         return False
 
+    # Give up after SUPERVISOR_RESCUE_LIMIT rescues for this (company, agent)
+    from app.models.research import Research
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(func.count())
+            .select_from(Research)
+            .where(Research.company_id == company_id)
+            .where(Research.agent_name == "supervisor")
+            .where(Research.raw_input["failed_agent"].astext == failed_agent_name)
+        )
+        rescue_count = result.scalar() or 0
+    if rescue_count >= SUPERVISOR_RESCUE_LIMIT:
+        logger.error(
+            "[SUPERVISOR] Rescue limit (%d) reached for %s on company %s — giving up",
+            SUPERVISOR_RESCUE_LIMIT, failed_agent_name, company_id,
+        )
+        await _log_supervision_event(company_id, failed_agent_name, "rescue_limit_reached")
+        return False
+
     # Map research name → arq job name
     job_map = {rn: jn for rn, jn in AGENT_CHAIN}
     arq_job = job_map.get(failed_agent_name)
@@ -114,8 +136,13 @@ async def identify_and_rescue(
         return False
 
     # Re-enqueue with appropriate args depending on agent
-    if failed_agent_name == "agent5_pow" and opportunity_id:
+    if failed_agent_name == "agent5_pow":
+        if not opportunity_id:
+            logger.error("[SUPERVISOR] agent5 rescue requires opportunity_id — skipping")
+            return False
         await pool.enqueue_job(arq_job, opportunity_id, company_id, pipeline_run_id, resume_text)
+    elif failed_agent_name == "agent8_crm_updater":
+        await pool.enqueue_job(arq_job, company_id, pipeline_run_id)
     else:
         await pool.enqueue_job(arq_job, company_id, pipeline_run_id, resume_text)
 
@@ -144,17 +171,28 @@ async def scan_stuck_companies(ctx, pipeline_run_id: str, resume_text: str = "")
     rescued = 0
 
     async with AsyncSessionLocal() as db:
-        # Companies belonging to this pipeline that are still processing
+        # Companies belonging to this pipeline that haven't reached a terminal
+        # state. Agents move status discovered → intel_done → analyzed →
+        # outreach_ready → processed/failed; anything non-terminal may be stuck.
         companies_result = await db.execute(
             select(Company).where(
                 Company.pipeline_run_id == pipeline_run_id,
-                Company.status == "processing",
+                Company.status.notin_(["processed", "failed"]),
             )
         )
         companies = companies_result.scalars().all()
 
     for company in companies:
         cid = str(company.id)
+
+        # Skip companies with recent activity — their chain is still moving
+        async with AsyncSessionLocal() as db:
+            last_result = await db.execute(
+                select(func.max(Research.created_at)).where(Research.company_id == cid)
+            )
+            last_activity = last_result.scalar()
+        if last_activity and last_activity > cutoff:
+            continue
 
         # Find which agents have already run
         async with AsyncSessionLocal() as db:
@@ -173,7 +211,7 @@ async def scan_stuck_companies(ctx, pipeline_run_id: str, resume_text: str = "")
                 break
 
         if missing is None:
-            # All agents done but status still 'processing' — mark complete
+            # All agents done but status still non-terminal — mark complete
             from app.database import AsyncSessionLocal as ALS
             async with ALS() as db:
                 result = await db.execute(select(Company).where(Company.id == company.id))
@@ -185,14 +223,40 @@ async def scan_stuck_companies(ctx, pipeline_run_id: str, resume_text: str = "")
 
         agent_name, arq_job = missing
         pool = ctx.get("redis")
-        if pool:
+        if not pool:
+            continue
+
+        if agent_name == "agent5_pow":
+            # agent5 runs per-opportunity — re-enqueue only the selected
+            # opportunities that still lack a PoW idea (run_agent5 takes
+            # opportunity_id as its first argument)
+            from app.config import settings
+            from app.models.opportunity import Opportunity
+
+            async with AsyncSessionLocal() as db:
+                opp_result = await db.execute(
+                    select(Opportunity.id)
+                    .where(Opportunity.company_id == cid)
+                    .where(Opportunity.fit_score.isnot(None))
+                    .where(Opportunity.pow_idea.is_(None))
+                    .order_by(Opportunity.fit_score.desc())
+                    .limit(settings.top_opportunities_for_pow)
+                )
+                pending_opps = opp_result.scalars().all()
+            for opp_id in pending_opps:
+                await pool.enqueue_job("run_agent5", str(opp_id), cid, pipeline_run_id, resume_text)
+        elif agent_name == "agent8_crm_updater":
+            # run_agent8 takes no resume_text
+            await pool.enqueue_job("run_agent8", cid, pipeline_run_id)
+        else:
             await pool.enqueue_job(arq_job, cid, pipeline_run_id, resume_text)
-            await _log_supervision_event(cid, agent_name, f"stuck_sweep_rescue:{arq_job}")
-            logger.warning(
-                "[SUPERVISOR] Swept stuck company %s — re-enqueued %s",
-                cid,
-                arq_job,
-            )
-            rescued += 1
+
+        await _log_supervision_event(cid, agent_name, f"stuck_sweep_rescue:{arq_job}")
+        logger.warning(
+            "[SUPERVISOR] Swept stuck company %s — re-enqueued %s",
+            cid,
+            arq_job,
+        )
+        rescued += 1
 
     return rescued
