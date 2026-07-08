@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { BUILT_IN_RESUME } from "@/lib/resume";
 import { queryClient } from "@/lib/queryClient";
 import { PipelineStatus, Company } from "@/types";
 import { Play, Loader2, CheckCircle, XCircle, Zap } from "lucide-react";
@@ -21,7 +22,7 @@ const AGENT_LABELS: Record<string, string> = {
 };
 
 export default function DiscoverPage() {
-  const [form, setForm] = useState({ city: "Bengaluru", sector: "AI", max_companies: 10, resume_text: "" });
+  const [form, setForm] = useState({ city: "Bengaluru", sector: "AI", max_companies: 10, resume_text: BUILT_IN_RESUME });
   const [runId, setRunId] = useState<string | null>(null);
 
   const { data: status } = useQuery<PipelineStatus>({
@@ -92,10 +93,10 @@ export default function DiscoverPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Your Resume</label>
+            <label className="text-xs text-zinc-400 mb-1 block">Built-in CV</label>
             <textarea
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm h-40 resize-none"
-              placeholder="Paste your resume text here..."
+              placeholder="Built-in CV copy is loaded here..."
               value={form.resume_text}
               onChange={(e) => setForm((f) => ({ ...f, resume_text: e.target.value }))}
             />
