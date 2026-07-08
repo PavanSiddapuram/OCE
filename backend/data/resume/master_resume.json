@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "version": 1,
+    "note": "Master resume as tagged blocks. Every block carries tags (titles/domains/skills) so a tailoring step can include/exclude blocks per target role. Blocks marked pinned=true always appear."
+  },
+  "basics": {
+    "name": "Pavan Siddapuram",
+    "location": "Anantapur, India",
+    "email": "siddapurampavan9381@gmail.com",
+    "phone": "+91 9381276155",
+    "links": ["LinkedIn", "GitHub"]
+  },
+  "summary": {
+    "id": "summary-default",
+    "text": "Systems-oriented Software Engineer building performance-critical web platforms and reliability-aware AI systems. Experienced in GPU-accelerated computation, async architectures, WebAssembly pipelines, and evaluation-driven LLM integrations across production environments.",
+    "pinned": true,
+    "tags": { "titles": ["software-engineer", "full-stack", "ai-engineer"], "domains": ["systems", "web", "ai"], "skills": [] }
+  },
+  "experience": [
+    {
+      "id": "exp-fracktal",
+      "company": "Fracktal Works Pvt. Ltd.",
+      "title": "Software Engineer I",
+      "period": "Aug 2025 – Present",
+      "pinned": true,
+      "bullets": [
+        {
+          "id": "exp-fracktal-1",
+          "text": "Led architecture and implementation of a browser-based 3D CAD platform (React 18, TypeScript, Three.js, React Three Fiber), reducing traditional fixture workflows from hours of manual CAD to minutes of guided in-browser generation.",
+          "tags": { "titles": ["frontend", "full-stack", "software-engineer"], "domains": ["cad", "3d", "manufacturing", "web"], "skills": ["react", "typescript", "threejs", "react-three-fiber"] }
+        },
+        {
+          "id": "exp-fracktal-2",
+          "text": "Engineered GPU-accelerated geometry pipelines using custom GLSL shaders and WebAssembly (Manifold 3D, MeshOptimizer), achieving 10x performance gains over CPU-based approaches; implemented tiled heightmap persistence for large models.",
+          "tags": { "titles": ["systems-engineer", "graphics-engineer"], "domains": ["3d", "performance", "graphics"], "skills": ["glsl", "webassembly", "gpu-compute"] }
+        },
+        {
+          "id": "exp-fracktal-3",
+          "text": "Designed multi-backend CSG boolean engine with BVH acceleration and automatic fallback to WASM-based kernels; built 3-stage mesh decimation pipeline reducing 2M-triangle meshes to 50K while preserving boundary topology.",
+          "tags": { "titles": ["systems-engineer", "graphics-engineer"], "domains": ["3d", "geometry", "performance"], "skills": ["csg", "bvh", "webassembly", "mesh-decimation"] }
+        },
+        {
+          "id": "exp-fracktal-4",
+          "text": "Offloaded compute-intensive tasks (CSG, decimation, mesh repair) to Web Workers with zero-copy ArrayBuffer transfers, maintaining 60fps UI responsiveness; packaged CAD engine as framework-agnostic monorepo module.",
+          "tags": { "titles": ["frontend", "systems-engineer"], "domains": ["performance", "web"], "skills": ["web-workers", "zero-copy", "monorepo"] }
+        }
+      ]
+    },
+    {
+      "id": "exp-manipal",
+      "company": "Manipal Academy of Higher Education",
+      "title": "Full Stack Web Developer",
+      "period": "Apr 2024 – Jul 2025",
+      "pinned": false,
+      "bullets": [
+        {
+          "id": "exp-manipal-1",
+          "text": "Built and deployed production applications using React and Django REST Framework with authentication, structured validation, and CI-driven release workflows.",
+          "tags": { "titles": ["full-stack", "backend"], "domains": ["web", "edtech"], "skills": ["react", "django", "ci-cd", "auth"] }
+        }
+      ]
+    },
+    {
+      "id": "exp-mitraz",
+      "company": "MITRAz Skills",
+      "title": "Data Analyst Intern",
+      "period": "Oct 2023 – Mar 2024",
+      "pinned": false,
+      "bullets": [
+        {
+          "id": "exp-mitraz-1",
+          "text": "Built business dashboards and automated data preprocessing pipelines using Python and SQL to streamline recurring reporting cycles.",
+          "tags": { "titles": ["data-analyst", "data-engineer"], "domains": ["analytics", "data"], "skills": ["python", "sql", "dashboards"] }
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-openclaw",
+      "name": "OpenClaw – Local-First Multi-Agent Harness (Rust)",
+      "year": "2026",
+      "bullets": [
+        {
+          "id": "proj-openclaw-1",
+          "text": "Built a local-first agent harness in Rust orchestrating specialized agent personas over a private, on-device context store, with deterministic routing and no cloud dependency for end-to-end execution.",
+          "tags": { "titles": ["ai-engineer", "systems-engineer"], "domains": ["ai", "agents", "local-first"], "skills": ["rust", "multi-agent-orchestration"] }
+        }
+      ]
+    },
+    {
+      "id": "proj-checkoutmind",
+      "name": "CheckoutMind – Dual-Agent Payment Recovery Platform",
+      "year": "2026",
+      "bullets": [
+        {
+          "id": "proj-checkoutmind-1",
+          "text": "Built a dual-agent recovery system on AWS Bedrock (Claude) coordinating a consumer-intelligence agent and a merchant-recovery agent over a shared order-context store, with offer-aware retry logic and a circuit-breaker fallback.",
+          "tags": { "titles": ["ai-engineer", "backend"], "domains": ["ai", "agents", "fintech", "payments"], "skills": ["aws-bedrock", "claude", "multi-agent-orchestration"] }
+        }
+      ]
+    },
+    {
+      "id": "proj-honestrag",
+      "name": "HonestRAG – Deterministic Retrieval-First LLM System",
+      "year": "2026",
+      "bullets": [
+        {
+          "id": "proj-honestrag-1",
+          "text": "Designed retrieval-first RAG architecture prioritizing explicit refusal over generative confidence, built on ChromaDB vector indexing and locally hosted LLM inference.",
+          "tags": { "titles": ["ai-engineer"], "domains": ["ai", "rag", "reliability"], "skills": ["rag", "chromadb", "vector-search", "local-llm"] }
+        },
+        {
+          "id": "proj-honestrag-2",
+          "text": "Implemented cosine-similarity threshold gating prior to generation to decouple retrieval quality from model output; validated against curated in-/out-of-domain golden test cases to reduce high-confidence hallucination.",
+          "tags": { "titles": ["ai-engineer"], "domains": ["ai", "rag", "evaluation"], "skills": ["rag", "evals", "vector-search"] }
+        }
+      ]
+    },
+    {
+      "id": "proj-repriceai",
+      "name": "RepriceAI – AI-Assisted Dynamic Pricing Platform",
+      "year": "2025",
+      "bullets": [
+        {
+          "id": "proj-repriceai-1",
+          "text": "Designed LLM-assisted pricing engine with explainability layer (FastAPI, React) deployed on Google Cloud Run; selected Top 10 out of 300+ submissions in Google Cloud Build & Blog Marathon.",
+          "tags": { "titles": ["ai-engineer", "full-stack"], "domains": ["ai", "pricing", "ecommerce"], "skills": ["fastapi", "react", "google-cloud-run", "llm"] }
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "languages": ["TypeScript", "Python", "JavaScript (ES6+)", "Go", "Rust"],
+    "frontend": ["React 18", "Next.js", "Three.js", "React Three Fiber", "Zustand", "React Query", "Tailwind CSS"],
+    "backend": ["FastAPI", "Django", "Fastify", "Express", "Redis", "BullMQ"],
+    "systems_performance": ["WebAssembly", "Web Workers", "BVH", "CSG", "Mesh Decimation", "GPU Compute", "Zero-Copy Transfers"],
+    "ai_agents": ["Multi-Agent Orchestration", "Retrieval-Augmented Generation (RAG)", "Vector Search (ChromaDB)", "LLM Tool Calling", "AWS Bedrock"],
+    "databases": ["PostgreSQL", "MySQL", "MongoDB"],
+    "cloud_devops": ["Docker", "GitHub Actions", "AWS (EC2, S3, RDS)", "Google Cloud Run"]
+  },
+  "education": [
+    { "id": "edu-lpu", "degree": "M.S. Applied Mathematics (Online)", "institution": "Lovely Professional University", "period": "Aug 2025 – Feb 2026", "note": "discontinued" },
+    { "id": "edu-sku", "degree": "B.Sc. Mathematics, Physics and Computer Science", "institution": "Sri Krishnadevaraya University", "period": "2020 – Aug 2023" }
+  ],
+  "certifications": [
+    { "id": "cert-claude-api", "name": "Building with the Claude API", "issuer": "Anthropic", "year": "2026", "tags": { "domains": ["ai"] } },
+    { "id": "cert-mcp", "name": "Introduction to Model Context Protocol", "issuer": "Anthropic", "year": "2026", "tags": { "domains": ["ai", "agents"] } },
+    { "id": "cert-yc", "name": "Startup School, Founder Curriculum", "issuer": "Y Combinator", "year": "2026", "tags": { "domains": ["startup"] } }
+  ]
+}
