@@ -13,7 +13,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@tanstack/react-query": "^5.56.2",
-    "@hello-pangea/dnd": "^17.0.0",
+    "@hello-pangea/dnd": "^18.0.1",
     "lucide-react": "^0.462.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4"

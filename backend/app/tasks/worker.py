@@ -76,7 +76,10 @@ async def _maybe_complete_pipeline(pipeline_run_id: str) -> None:
         if not run or run.status != "running":
             return
         companies_result = await db.execute(
-            select(Company).where(Company.status.in_(["processed", "failed"]))
+            select(Company).where(
+                Company.pipeline_run_id == run.id,
+                Company.status.in_(["processed", "failed"]),
+            )
         )
         done_count = len(companies_result.scalars().all())
         if done_count >= run.total_companies:
@@ -271,20 +274,34 @@ async def run_agent6(ctx, company_id: str, pipeline_run_id: str, resume_text: st
 
 
 async def _check_and_enqueue_agent7(ctx, company_id: str, pipeline_run_id: str, resume_text: str):
-    """Barrier: enqueue agent7 only when both agent5 and agent6 have research records."""
-    from sqlalchemy import func
-    from app.models.research import Research
+    """
+    Barrier: enqueue agent7 exactly once, only when
+      1. agent6 (founder research) has completed, AND
+      2. every opportunity selected for PoW generation has its pow_idea filled
+         (agent5 runs once per top-N opportunity, so a raw research-row count
+          would fire the barrier before all PoWs — or founder research — exist).
+    """
+    if not await _research_done(company_id, ["agent6_founder_research"]):
+        return
+
+    from app.models.opportunity import Opportunity
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(func.count())
-            .select_from(Research)
-            .where(Research.company_id == company_id)
-            .where(Research.agent_name.in_(["agent5_pow", "agent6_founder_research"]))
+            select(Opportunity.pow_idea)
+            .where(Opportunity.company_id == company_id)
+            .where(Opportunity.fit_score.isnot(None))
+            .order_by(Opportunity.fit_score.desc())
+            .limit(settings.top_opportunities_for_pow)
         )
-        count = result.scalar() or 0
+        pow_ideas = result.scalars().all()
 
-    if count >= 2:
+    if not pow_ideas or any(p is None for p in pow_ideas):
+        return
+
+    # Redis NX flag so concurrent barrier checks enqueue agent7 only once
+    first = await ctx["redis"].set(f"oce:agent7_enqueued:{company_id}", "1", nx=True, ex=86400)
+    if first:
         await ctx["redis"].enqueue_job("run_agent7", company_id, pipeline_run_id, resume_text)
 
 
