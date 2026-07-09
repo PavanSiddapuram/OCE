@@ -3,6 +3,11 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas.contact import ContactOut
+from app.schemas.founder import FounderOut
+from app.schemas.opportunity import OpportunityOut
+from app.schemas.outreach import OutreachOut
+
 
 class CompanyBase(BaseModel):
     name: str
@@ -47,7 +52,7 @@ class CompanyOut(CompanyBase):
 
 
 class CompanyDetail(CompanyOut):
-    opportunities: list = []
-    founders: list = []
-    outreach: list = []
-    contacts: list = []
+    opportunities: list[OpportunityOut] = []
+    founders: list[FounderOut] = []
+    outreach: list[OutreachOut] = []
+    contacts: list[ContactOut] = []
