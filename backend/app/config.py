@@ -1,4 +1,10 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
+
+# .env lives at the repo root (one level above backend/); anchor it to this
+# file's location so it loads no matter which directory the app starts from
+_REPO_ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
@@ -19,7 +25,7 @@ class Settings(BaseSettings):
     max_companies_per_run: int = 20
     top_opportunities_for_pow: int = 5
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"env_file": (_REPO_ROOT_ENV, ".env"), "extra": "ignore"}
 
 
 settings = Settings()
