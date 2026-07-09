@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # DeepSeek — sole LLM provider for all 8 agents
-    # "deepseek-chat" is DeepSeek's always-latest alias (V3 today, V4 when released)
-    # Override with DEEPSEEK_MODEL=deepseek-chat in .env to pin a specific version
+    # Valid API model names: "deepseek-v4-flash" (fast/cheap) or "deepseek-v4-pro"
+    # (higher quality). Override via DEEPSEEK_MODEL in .env.
     deepseek_api_key: str = ""
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-v4-flash"
     deepseek_base_url: str = "https://api.deepseek.com"
 
     # External tools
