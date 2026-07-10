@@ -27,6 +27,15 @@ export interface CompanyDetail extends Company {
   contacts: Contact[];
 }
 
+export interface PressureTest {
+  core_assumption: string;
+  fatal_flaws: { label: string; why_it_kills: string; what_overcomes: string }[];
+  founder_shrug_risk: string;
+  cuts_for_weekend: string[];
+  verdict: "BUILD" | "RESHAPE" | "SKIP";
+  verdict_reasoning: string;
+}
+
 export interface Opportunity {
   id: string;
   company_id: string;
@@ -39,6 +48,7 @@ export interface Opportunity {
   pow_idea: string | null;
   pow_repo_url: string | null;
   skills_required: string[] | null;
+  pressure_test: PressureTest | null;
   created_at: string;
 }
 

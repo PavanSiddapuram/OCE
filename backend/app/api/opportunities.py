@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,3 +44,24 @@ async def list_opportunities(
     opps = result.scalars().all()
 
     return {"items": [OpportunityOut.model_validate(o) for o in opps], "total": total, "page": page}
+
+
+@router.post("/{opportunity_id}/pressure-test", response_model=OpportunityOut)
+async def pressure_test_opportunity(opportunity_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Run the agent9 gauntlet on this opportunity's PoW; returns the updated row.
+
+    Synchronous by design — a single LLM call the engineer waits on before
+    deciding whether to spend a weekend building.
+    """
+    result = await db.execute(select(Opportunity).where(Opportunity.id == opportunity_id))
+    opp = result.scalar_one_or_none()
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    from app.agents.agent9_pressure_test import run_pressure_test
+    verdict = await run_pressure_test(str(opportunity_id))
+    if verdict is None:
+        raise HTTPException(status_code=500, detail="Pressure test failed to produce a verdict")
+
+    await db.refresh(opp)
+    return opp

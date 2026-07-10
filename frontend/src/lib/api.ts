@@ -37,6 +37,9 @@ export const api = {
     return request<{ items: import("@/types").Opportunity[]; total: number; page: number }>(`/opportunities${q}`);
   },
 
+  pressureTestOpportunity: (id: string) =>
+    request<import("@/types").Opportunity>(`/opportunities/${id}/pressure-test`, { method: "POST" }),
+
   // Outreach
   getOutreach: (companyId: string) =>
     request<import("@/types").Outreach[]>(`/outreach/${companyId}`),

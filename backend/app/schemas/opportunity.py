@@ -16,6 +16,7 @@ class OpportunityOut(BaseModel):
     pow_idea: str | None = None
     pow_repo_url: str | None = None
     skills_required: list[str] | None = None
+    pressure_test: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
