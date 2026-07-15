@@ -27,9 +27,17 @@ export interface CompanyDetail extends Company {
   contacts: Contact[];
 }
 
+export interface PressureTestFlaw {
+  label: string;
+  severity: "fatal" | "moderate" | "minor";
+  why_it_matters: string;
+  what_overcomes: string;
+}
+
 export interface PressureTest {
   core_assumption: string;
-  fatal_flaws: { label: string; why_it_kills: string; what_overcomes: string }[];
+  weekend_worth_score: number;
+  flaws: PressureTestFlaw[];
   founder_shrug_risk: string;
   cuts_for_weekend: string[];
   verdict: "BUILD" | "RESHAPE" | "SKIP";

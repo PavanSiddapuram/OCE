@@ -4,8 +4,8 @@ import { Fragment, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Link from "next/link";
-import { Opportunity, PressureTest } from "@/types";
-import { Gauge, Loader2 } from "lucide-react";
+import { Opportunity, PressureTest, PressureTestFlaw } from "@/types";
+import { Gauge, Loader2, RotateCw } from "lucide-react";
 
 const CATEGORIES = ["", "bottleneck", "growth_lever", "missing_piece", "technical_debt"];
 const CATEGORY_LABEL: Record<string, string> = {
@@ -25,6 +25,11 @@ const VERDICT_COLOR: Record<PressureTest["verdict"], string> = {
   RESHAPE: "text-amber-400 bg-amber-400/10 border-amber-400/30",
   SKIP: "text-red-400 bg-red-400/10 border-red-400/30",
 };
+const SEVERITY_COLOR: Record<PressureTestFlaw["severity"], string> = {
+  fatal: "border-red-400/40 text-red-300",
+  moderate: "border-amber-400/40 text-amber-300",
+  minor: "border-zinc-600 text-zinc-400",
+};
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <span className="text-zinc-600 text-xs font-mono">—</span>;
@@ -35,18 +40,24 @@ function ScoreBadge({ score }: { score: number | null }) {
 function PressureTestDetail({ pt }: { pt: PressureTest }) {
   return (
     <div className="space-y-3 text-xs">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold font-mono text-zinc-200">{pt.weekend_worth_score}</span>
+        <span className="text-zinc-500">/ 100 weekend-worth score</span>
+      </div>
       <div>
         <p className="text-zinc-500 uppercase tracking-wide mb-1">Core assumption</p>
         <p className="text-zinc-300">{pt.core_assumption}</p>
       </div>
       <div>
-        <p className="text-zinc-500 uppercase tracking-wide mb-1">Fatal flaws</p>
+        <p className="text-zinc-500 uppercase tracking-wide mb-1">Flaws</p>
         <div className="space-y-2">
-          {pt.fatal_flaws.map((f, i) => (
-            <div key={i} className="border-l-2 border-red-400/40 pl-3">
-              <p className="font-semibold text-red-300">{f.label}</p>
-              <p className="text-zinc-400">{f.why_it_kills}</p>
-              <p className="text-zinc-500 mt-0.5">Overcome if: {f.what_overcomes}</p>
+          {pt.flaws.map((f, i) => (
+            <div key={i} className={`border-l-2 pl-3 ${SEVERITY_COLOR[f.severity]}`}>
+              <p className="font-semibold">
+                {f.label} <span className="font-normal text-zinc-500 uppercase text-[10px]">{f.severity}</span>
+              </p>
+              <p className="text-zinc-400">{f.why_it_matters}</p>
+              <p className="text-zinc-500 mt-0.5">Fix: {f.what_overcomes}</p>
             </div>
           ))}
         </div>
@@ -163,12 +174,24 @@ export default function OpportunitiesPage() {
                     </td>
                     <td className="px-4 py-3">
                       {o.pressure_test ? (
-                        <button
-                          onClick={() => setExpandedId(expandedId === o.id ? null : o.id)}
-                          className={`text-xs px-2 py-0.5 rounded-full border font-semibold ${VERDICT_COLOR[o.pressure_test.verdict]}`}
-                        >
-                          {o.pressure_test.verdict}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setExpandedId(expandedId === o.id ? null : o.id)}
+                            className={`text-xs px-2 py-0.5 rounded-full border font-semibold ${VERDICT_COLOR[o.pressure_test.verdict]}`}
+                          >
+                            {o.pressure_test.verdict} · {o.pressure_test.weekend_worth_score}
+                          </button>
+                          <button
+                            onClick={() => pressureTest.mutate(o.id)}
+                            disabled={pressureTest.isPending}
+                            title="Re-run pressure test"
+                            className="text-zinc-600 hover:text-amber-400 transition-colors disabled:opacity-50"
+                          >
+                            {pressureTest.isPending && pressureTest.variables === o.id
+                              ? <Loader2 size={11} className="animate-spin" />
+                              : <RotateCw size={11} />}
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => pressureTest.mutate(o.id)}
