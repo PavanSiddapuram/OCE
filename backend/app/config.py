@@ -1,9 +1,6 @@
 from pathlib import Path
-
 from pydantic_settings import BaseSettings
 
-# .env lives at the repo root (one level above backend/); anchor it to this
-# file's location so it loads no matter which directory the app starts from
 _REPO_ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
 
 
@@ -11,14 +8,30 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://oce:oce_dev@localhost:5432/oce"
     redis_url: str = "redis://localhost:6379"
 
-    # DeepSeek — sole LLM provider for all 8 agents
-    # Valid API model names: "deepseek-v4-flash" (fast/cheap) or "deepseek-v4-pro"
-    # (higher quality). Override via DEEPSEEK_MODEL in .env.
+    # Multi-Provider LLM Configuration
+    # Supported: "gemini" | "kimi" | "deepseek"
+    llm_provider: str = "gemini"
+
+    # Gemini (Google AI Studio - Free Tier / Paid)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-pro"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+    # Kimi API (Moonshot AI)
+    kimi_api_key: str = ""
+    kimi_model: str = "moonshot-v1-8k"
+    kimi_base_url: str = "https://api.moonshot.cn/v1"
+
+    # DeepSeek
     deepseek_api_key: str = ""
     deepseek_model: str = "deepseek-v4-flash"
     deepseek_base_url: str = "https://api.deepseek.com"
 
-    # External tools
+    # alphaXiv MCP Server
+    alphaxiv_mcp_url: str = "https://api.alphaxiv.org/mcp/v1"
+    alphaxiv_api_key: str = ""
+
+    # External search tools
     tavily_api_key: str = ""
     firecrawl_api_key: str = ""
 

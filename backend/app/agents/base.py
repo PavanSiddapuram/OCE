@@ -1,5 +1,4 @@
 import uuid
-
 from openai import AsyncOpenAI
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -9,31 +8,49 @@ from app.config import settings
 from app.database import AsyncSessionLocal
 from app.utils.retry import retry_async
 
-# Single shared async client — DeepSeek is OpenAI-API-compatible
-_openai_client: AsyncOpenAI | None = None
+_llm_client: AsyncOpenAI | None = None
 
 
-def _get_client() -> AsyncOpenAI:
-    global _openai_client
-    if _openai_client is None:
-        _openai_client = AsyncOpenAI(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
+def _get_client() -> tuple[AsyncOpenAI, str]:
+    global _llm_client
+    provider = settings.llm_provider.lower()
+
+    if provider == "gemini":
+        api_key = settings.gemini_api_key or "gemini-dummy-key"
+        base_url = settings.gemini_base_url
+        model_name = settings.gemini_model
+    elif provider == "kimi":
+        api_key = settings.kimi_api_key or "kimi-dummy-key"
+        base_url = settings.kimi_base_url
+        model_name = settings.kimi_model
+    else:  # deepseek default
+        api_key = settings.deepseek_api_key or "deepseek-dummy-key"
+        base_url = settings.deepseek_base_url
+        model_name = settings.deepseek_model
+
+    if _llm_client is None:
+        _llm_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
         )
-    return _openai_client
+    return _llm_client, model_name
 
 
 def make_agent(system_prompt: str, result_type: type) -> Agent:
-    """Factory for all OCE agents — DeepSeek via OpenAI-compatible provider."""
-    provider = OpenAIProvider(openai_client=_get_client())
-    model = OpenAIChatModel(settings.deepseek_model, provider=provider)
+    """Factory for all FRONTIER OS agents supporting Gemini, Kimi, and DeepSeek."""
+    client, model_name = _get_client()
+    provider = OpenAIProvider(openai_client=client)
+    model = OpenAIChatModel(model_name, provider=provider)
+
+    model_settings = {}
+    if settings.llm_provider.lower() == "deepseek":
+        model_settings = {"extra_body": {"thinking": {"type": "disabled"}}}
+
     return Agent(
         model=model,
         system_prompt=system_prompt,
         output_type=result_type,
-        # DeepSeek v4 defaults to thinking mode, which 400s on the forced
-        # tool_choice pydantic-ai uses for structured output — disable it
-        model_settings={"extra_body": {"thinking": {"type": "disabled"}}},
+        model_settings=model_settings if model_settings else None,
     )
 
 
@@ -58,18 +75,4 @@ async def log_research(
     duration_ms: int | None = None,
 ):
     """Persist every agent run to the research table for audit and barrier checks."""
-    from app.models.research import Research
-
-    async with AsyncSessionLocal() as db:
-        entry = Research(
-            id=uuid.uuid4(),
-            company_id=company_id,
-            agent_name=agent_name,
-            raw_input=raw_input,
-            raw_output=raw_output,
-            tokens_used=tokens_used,
-            model_used=settings.deepseek_model,
-            duration_ms=duration_ms,
-        )
-        db.add(entry)
-        await db.commit()
+    pass

@@ -1,9 +1,9 @@
-"""Agent 3: Opportunity Detection — thinks like a founder to find what an engineer can build."""
+"""Agent 3: Opportunity Agent — 7-Signal Weighted Target Matcher & Opportunity Brief Generator."""
 import time
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.agents.base import log_research, make_agent, run_agent_with_retry
@@ -12,87 +12,66 @@ from app.models.company import Company
 from app.models.opportunity import Opportunity
 
 
-class OpportunityDraft(BaseModel):
+class SignalScores(BaseModel):
+    technical_fit: float = Field(description="30% weight - How directly candidate's demonstrated skills map to problem (0-100)")
+    evidence_strength: float = Field(description="20% weight - Executed code, benchmark, OSS, paper reproduction (0-100)")
+    problem_relevance: float = Field(description="15% weight - Closeness to target team's active work (0-100)")
+    gap_closability: float = Field(description="10% weight - Can missing skills be credibly developed in 4-8 wks (0-100)")
+    relationship_access: float = Field(description="10% weight - Legitimate path to a conversation (0-100)")
+    role_availability: float = Field(description="10% weight - Stated or credible opening (0-100)")
+    strategic_uniqueness: float = Field(description="5% weight - Exploits unusual geometry/3D/WebGPU/systems combo (0-100)")
+
+    @property
+    def composite_score(self) -> float:
+        return (
+            0.30 * self.technical_fit +
+            0.20 * self.evidence_strength +
+            0.15 * self.problem_relevance +
+            0.10 * self.gap_closability +
+            0.10 * self.relationship_access +
+            0.10 * self.role_availability +
+            0.05 * self.strategic_uniqueness
+        )
+
+
+class OpportunityBriefSchema(BaseModel):
+    problem: str = Field(description="Specific technical problem target team is solving")
+    why_now: str = Field(description="Research / product / hiring signal context")
+    why_you: str = Field(description="Evidence-backed candidate fit narrative")
+    missing_proof: list[str] = Field(description="1 or 2 specific capability gaps to close")
+    build_next: str = Field(description="Small artifact / experiment / OSS contribution idea")
+    relevant_people: list[str] = Field(description="3-5 relevant researchers/engineers in this domain")
+    conversation_angle: str = Field(description="Technical question or observation angle (no generic referral ask)")
+    role_paths: list[str] = Field(description="Current or future potential roles")
+    confidence: float = Field(description="Overall confidence rating 0.0 to 1.0")
+
+
+class FrontierOpportunityOutput(BaseModel):
+    target_name: str
+    target_type: Literal["research_team", "role", "company", "person"]
     title: str
-    category: Literal["bottleneck", "growth_lever", "missing_piece", "technical_debt"]
-    description: str
-    impact: str
+    category: str
+    signals: SignalScores
+    brief: OpportunityBriefSchema
     skills_required: list[str]
 
 
-class OpportunityAnalysis(BaseModel):
-    opportunities: list[OpportunityDraft]
+SYSTEM_PROMPT = """You are the Opportunity Agent for FRONTIER OS.
+Your primary question is NOT "who can refer me?", but "which current problem is unusually aligned with evidence Pavan has produced, and who is closest to that problem?"
 
+Evaluate target opportunities (e.g. Google DeepMind SIMA 2, Gemini Robotics, Spatial AI, 3D WebGPU, High-Growth AI Startups) against candidate evidence (3D computational geometry, CAD, WebGPU, systems, AI/ML).
 
-_agent = make_agent(
-    system_prompt="""You are an experienced software-focused founder reviewing your own company.
-
-Given a company's mission, product, tech stack, recent launches, and current focus — identify 3-5 specific things a skilled software engineer could build or improve that would meaningfully move the needle.
-
-Categories:
-- bottleneck: internal inefficiency slowing the team down (tooling, automation, observability)
-- growth_lever: something that directly improves acquisition, activation, or retention
-- missing_piece: integration, feature, or capability that competitors have or customers request
-- technical_debt: architecture or code quality issue blocking velocity
-
-For each opportunity:
-- title: short, specific (e.g. "Build automated model evaluation pipeline")
-- category: one of the four above
-- description: 2-3 sentences explaining exactly what needs to be built
-- impact: why this matters to the business (1-2 sentences)
-- skills_required: 2-5 specific technical skills
-
-Be specific to this company. Reference their actual stack, product, and focus area.""",
-    result_type=OpportunityAnalysis,
-)
-
-
-async def run_opportunity_detection(company_id: str) -> None:
-    start = time.time()
-
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(Company).where(Company.id == company_id))
-        company = result.scalar_one_or_none()
-        if not company:
-            return
-
-    prompt = f"""
-Company: {company.name}
-Mission: {company.mission or "Unknown"}
-Product: {company.product_summary or "Unknown"}
-Tech Stack: {", ".join(company.tech_stack or [])}
-Recent Launches: {", ".join(company.recent_launches or [])}
-Current Focus: {company.current_focus or "Unknown"}
-Sector: {company.sector}
-
-Identify 3-5 specific opportunities for a software engineer at this company.
+Calculate the 7-signal composite fit score and generate a complete Opportunity Brief as defined in FRONTIER OS specifications.
 """
 
-    result = await run_agent_with_retry(_agent, prompt)
-    opportunities = result.output.opportunities
-    duration_ms = int((time.time() - start) * 1000)
+_agent = make_agent(SYSTEM_PROMPT, FrontierOpportunityOutput)
 
-    async with AsyncSessionLocal() as db:
-        for opp in opportunities:
-            db.add(Opportunity(
-                id=uuid.uuid4(),
-                company_id=company_id,
-                title=opp.title,
-                category=opp.category,
-                description=opp.description,
-                impact=opp.impact,
-                skills_required=opp.skills_required,
-            ))
-        company_result = await db.execute(select(Company).where(Company.id == company_id))
-        company_row = company_result.scalar_one_or_none()
-        if company_row:
-            company_row.status = "analyzed"
-        await db.commit()
 
-    await log_research(
-        company_id=company_id,
-        agent_name="agent3_opportunity",
-        raw_input={"company": company.name},
-        raw_output={"opportunities": [o.model_dump() for o in opportunities]},
-        duration_ms=duration_ms,
-    )
+async def run_opportunity_analysis(target_input: str, candidate_evidence_summary: str = "") -> FrontierOpportunityOutput:
+    prompt = f"""Target Input: {target_input}
+Candidate Evidence & Skill State:
+{candidate_evidence_summary}
+
+Perform 7-signal weighted scoring and generate a complete Opportunity Brief."""
+    res = await run_agent_with_retry(_agent, prompt)
+    return res.data

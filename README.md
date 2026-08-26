@@ -1,235 +1,147 @@
-# Opportunity Creation Engine (OCE)
+# FRONTIER OS — Personal Research-to-Evidence-to-Opportunity Operating System (OCE 2.0)
 
-> Turn yourself from applicant into opportunity creator.
+> **Core Philosophy**: Build only what compounds real work. Problem → Proof → People → Opportunity.
 
-OCE is a multi-agent system that helps engineers discover startups, understand their business, find hidden problems, build proof-of-work, and generate founder-specific outreach — automatically.
-
-Think: **Perplexity + YC Research + CRM + Founder Intelligence** for ambitious engineers.
+**FRONTIER OS** is a high-signal operating system built on top of the Opportunity Creation Engine (OCE) codebase. It is engineered specifically for a 6-to-7 month trajectory targeting **Google SWE / AI-ML / DeepMind Research Engineering** (Bengaluru & Global) while remaining adaptable for top high-growth tech startups.
 
 ---
 
-## What It Does
-
-Instead of finding job openings, OCE **creates openings** by running an 8-agent pipeline every week:
+## 🏛 System Architecture
 
 ```
-100 Startups
-      ↓
-Top 20 (by sector/city fit)
-      ↓
-Top 5 Opportunities (scored against your resume)
-      ↓
-Build 1 Prototype (proof-of-work idea generated)
-      ↓
-Publish Build Log
-      ↓
-Contact Founder (personalized narrative written)
-      ↓
-Interview
-```
-
----
-
-## Architecture
-
-### 8-Agent Pipeline
-
-| Agent | What It Does |
-|-------|-------------|
-| **Agent 1: Discovery** | Searches YC, Accel, Peak XV, Nexus, Blume, AngelList for startups matching your city + sector |
-| **Agent 2: Intelligence** | Scrapes website, blog, changelog, hiring page → mission, product, tech stack, recent launches |
-| **Agent 3: Opportunity Detection** | "Acts as a founder" to find 3–5 specific things a software engineer could build or improve |
-| **Agent 4: Skill Match** | Scores your fit (0–100) against each opportunity based on your resume |
-| **Agent 5: Proof-of-Work** | Designs a concrete mini-project/prototype to demonstrate capability |
-| **Agent 6: Founder Research** | Finds what founders repeatedly complain about (via interviews, blogs, podcasts) |
-| **Agent 7: Narrative** | Writes founder-specific outreach: hook referencing their complaint + PoW in the body |
-| **Agent 8: CRM Updater** | Creates contact records and sets follow-up dates |
-
-### Tech Stack
-
-```
-Backend          FastAPI + Python 3.11
-Database         PostgreSQL 16
-Queue            Redis 7 + ARQ (async task queue)
-AI               Pydantic AI + DeepSeek V3 (deepseek-chat)
-Search           Tavily (web search)
-Scraping         Firecrawl (website content)
-Doc Reading      Jina Reader (LinkedIn, articles)
-Frontend         Next.js 15 + React 19 + Tailwind CSS
-Drag & Drop      @hello-pangea/dnd (CRM Kanban)
-Data Fetching    TanStack Query v5
-Infrastructure   Docker Compose
+                                  FRONTIER OS (OCE 2.0)
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 Next.js 15 Web Application                              │
+│                                                                                         │
+│  Daily Command Center │ Track A: Mock Interview OS │ Track B: Research Lab & alphaXiv  │
+│  Gemini Deep Research Agent (Interactions API) │ Evidence & Proof Studio │ People CRM   │
+│  7-Signal Opportunity Engine │ Weekly Coordinator Control Plane                         │
+└───────────────────────────────────────────┬─────────────────────────────────────────────┘
+                                            │ HTTPS / SSE
+                                            ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 FastAPI Modular Monolith                                │
+│                                                                                         │
+│  ┌───────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────┐  │
+│  │   Interview Engine    │  │   Research Engine    │  │      Opportunity Engine      │  │
+│  │  Adaptive Mock &      │  │ Deep Research Runner │  │  7-Signal Weighted Matcher   │  │
+│  │  Failure Fingerprint  │  │ & Paper/Repo Lab     │  │   & Brief Generator          │  │
+│  └───────────────────────┘  └──────────┬───────────┘  └──────────────────────────────┘  │
+└──────────────┬─────────────────────────┼─────────────────────────────┼──────────────────┘
+               │                         │                             │
+               ▼                         ▼                             ▼
+      ┌─────────────────┐       ┌─────────────────┐          ┌───────────────────┐
+      │ PostgreSQL 16   │       │ Gemini Deep     │          │ alphaXiv MCP      │
+      │ + pgvector      │       │ Research API    │          │ Client Connector  │
+      └─────────────────┘       └────────┬────────┘          └─────────┬─────────┘
+                                         │                             │
+                                         ▼                             ▼
+                               Gemini Interactions API        alphaXiv Server
+                               (deep-research-max)            (https://api.alphaxiv.org)
 ```
 
 ---
 
-## Project Structure
+## 🔑 Key Features & Components
 
-```
-OCE/
-├── docker-compose.yml          # Postgres + Redis + backend + worker + frontend
-├── .env.example                # API key template
-├── backend/
-│   ├── app/
-│   │   ├── main.py             # FastAPI app
-│   │   ├── config.py           # Settings via pydantic-settings
-│   │   ├── database.py         # Async SQLAlchemy engine
-│   │   ├── models/             # SQLAlchemy ORM (7 tables)
-│   │   ├── schemas/            # Pydantic v2 request/response shapes
-│   │   ├── api/                # FastAPI routers (pipeline, companies, opportunities, contacts, outreach, crm)
-│   │   ├── agents/             # 8 Pydantic AI agents (agent1–agent8)
-│   │   ├── tasks/              # ARQ worker + job queue
-│   │   └── tools/              # Tavily, Firecrawl, Jina wrappers
-│   └── alembic/                # Database migrations
-└── frontend/
-    └── src/
-        ├── app/                # Next.js App Router pages
-        │   ├── discover/       # Pipeline control room
-        │   ├── companies/      # Company list + detail (Intel/Opps/Founders/Outreach tabs)
-        │   ├── opportunities/  # Ranked by fit_score
-        │   ├── crm/            # Kanban board (drag-and-drop)
-        │   └── outreach/       # Message library with copy buttons
-        ├── hooks/              # usePipeline, useCompanies, useOpportunities, useCRM
-        ├── lib/                # API client + QueryClient
-        └── types/              # TypeScript types
-```
+### 1. Track A: Mock Interview Studio (`/interview`)
+- **Frontier Question Sets**: 3D ray casting, ray-sphere intersection invariants, Bounding Volume Hierarchy (BVH) with Surface Area Heuristic (SAH), and memory-constrained pressure coding.
+- **Failure Fingerprinting**: Automatically logs recurring candidate mistakes (e.g. boundary checks, time complexity derivations) to adjust question difficulty.
+- **Rubric Scorecard**: Evaluates correctness, time/space complexity, communication, and edge case handling.
 
----
+### 2. Track B: Research & Experiment Lab (`/research`)
+- **Baseline & Ablation Experiment Tracker**: Logs commit SHAs, hardware configs, datasets, metrics (FPS, PSNR, VRAM), and automatically writes evidence claims.
+- **alphaXiv MCP Corpus Explorer**: Native integration with the 19 tools of the alphaXiv Model Context Protocol server (`https://api.alphaxiv.org/mcp/v1`) for literature search, AI paper reports, and GitHub repo file tree browsing.
+- **Gemini Deep Research Agent (Google Interactions API)**: Autonomous background analyst agent (`deep-research-preview-04-2026` & `deep-research-max-preview-04-2026`) supporting:
+  - `background=True` async execution.
+  - **Collaborative Planning**: Multi-turn plan review, refinement, and approval before execution.
+  - `visualization="auto"`: Auto-generated benchmark charts and visualizations.
+  - Remote alphaXiv MCP tool binding.
 
-## Database Schema
+### 3. 7-Signal Opportunity Engine (`/opportunities`)
+Calculates composite fit scores across 7 key weighted dimensions:
+$$\text{Composite Score} = 0.30 \text{Fit} + 0.20 \text{Proof} + 0.15 \text{Problem} + 0.10 \text{Gap} + 0.10 \text{Network} + 0.10 \text{Role} + 0.05 \text{Edge}$$
+- Generates structured **Opportunity Briefs** containing core problem, why now, why you, missing proof, build next, and conversation hooks.
 
-| Table | Key Columns |
-|-------|-------------|
-| `companies` | name, website, mission, product_summary, tech_stack[], recent_launches[], status |
-| `founders` | name, role, complaints[], background, raw_research |
-| `opportunities` | title, category, description, impact, fit_score, fit_reasoning, pow_idea |
-| `research` | agent_name, raw_input, raw_output, tokens_used, duration_ms |
-| `contacts` | name, role, contact_type, status (not_contacted→offer) |
-| `outreach` | channel, hook, why_company, why_problem, why_me, what_i_built, call_to_action, body |
-| `pipeline_runs` | filters, status, current_agent, agents_done[], total_companies |
+### 4. People & Researcher CRM (`/crm`)
+- **Kanban Pipeline**: `Not Contacted` → `Messaged` → `Replied` → `Meeting` → `Interview` → `Offer`.
+- **alphaXiv Researcher Finder**: Graph search across paper authors, current affiliations ("Google DeepMind"), and citation metrics.
+
+### 5. Evidence & Public Proof Studio (`/evidence`)
+- Stores citation-grade evidence claims backed by repository URLs, benchmark numbers, and paper XML citations.
+
+### 6. Weekly Coordinator Control Plane (`/weekly`)
+- Sunday planner allocating max 3 "must-win" priorities and setting daily 60–90 minute focus blocks.
 
 ---
 
-## API Endpoints
+## 🛠 Tech Stack
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/pipeline/run` | Start pipeline (city, sector, max_companies, resume_text) |
-| GET | `/api/pipeline/{id}/status` | Poll pipeline status |
-| GET | `/api/companies` | List with filters |
-| GET | `/api/companies/{id}` | Detail with nested opportunities, founders, outreach |
-| GET | `/api/opportunities` | Ranked by fit_score |
-| GET | `/api/outreach/{company_id}` | Outreach messages for a company |
-| GET | `/api/crm/board` | Kanban grouped by status |
-| POST | `/api/contacts` | Create contact |
-| PATCH | `/api/contacts/{id}/status` | Move CRM stage |
+- **Backend**: FastAPI + Python 3.14 / 3.11, AsyncSQLAlchemy, Pydantic v2.
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS, Lucide Icons.
+- **LLM Engine**: Multi-provider adapter supporting Gemini 2.5/3.7 Pro & Flash (Default), Moonshot Kimi API, and DeepSeek V3/R1.
+- **MCP Connector**: HTTP JSON-RPC 2.0 client for alphaXiv MCP server.
+- **Research Agent**: Google Gemini Interactions API (`v1beta/interactions`, revision `2026-05-20`).
+- **Database**: PostgreSQL 16 + pgvector (with automatic offline fallback mode).
 
 ---
 
-## Setup
+## 🚀 Quick Start Guide
 
 ### Prerequisites
-
-- Docker Desktop
+- Node.js 18+ & npm
 - Python 3.11+
-- Node.js 20+
-- API keys: DeepSeek, Tavily, Firecrawl
+- (Optional) Docker & Docker Compose for PostgreSQL persistence
 
-### 1. Clone and configure
+### 1. Environment Configuration
+Create or edit `.env` in the workspace root:
 
-```bash
-git clone https://github.com/PavanSiddapuram/OCE.git
-cd OCE
-cp .env.example .env
-# Edit .env and add your API keys
+```env
+# Primary LLM Provider Configuration
+LLM_PROVIDER=gemini
+
+# Gemini API Key (Google AI Studio / Interactions API)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-pro
+
+# alphaXiv MCP Configuration
+ALPHAXIV_MCP_URL=https://api.alphaxiv.org/mcp/v1
+ALPHAXIV_API_KEY=
+
+# External Tools
+TAVILY_API_KEY=
+FIRECRAWL_API_KEY=
+
+# Database Connection (Optional if running Postgres container)
+DATABASE_URL=postgresql+asyncpg://oce:oce_dev@localhost:5432/oce
 ```
 
-### 2. Start infrastructure
-
-```bash
-docker compose up -d postgres redis
-```
-
-### 3. Run database migrations
-
-```bash
-cd backend
-pip install -e .
-alembic upgrade head
-```
-
-### 4. Start backend + worker
-
-Terminal 1:
+### 2. Start Backend API Server
 ```bash
 cd backend
-uvicorn app.main:app --reload
+python -m py_compile app/main.py  # Verify syntax
+uvicorn app.main:app --reload --port 8000
 ```
+Backend API interactive docs: `http://localhost:8000/docs`
 
-Terminal 2:
-```bash
-cd backend
-python -m arq app.tasks.worker.WorkerSettings
-```
-
-### 5. Start frontend
-
+### 3. Start Frontend UI Server
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
+Open `http://localhost:3000/command` in your browser.
 
-Open **http://localhost:3000**
+---
 
-### Full Docker setup (optional)
+## 🧪 Verification & Testing
 
+To run the Next.js production build check:
 ```bash
-docker compose up
+cd frontend
+npm run build
 ```
 
----
-
-## Usage
-
-1. Go to **Discover** — select city, sector, set company limit, paste your resume
-2. Click **Run Pipeline** — watch companies appear in real-time
-3. Go to **Companies** — click any company to see Intelligence, Opportunities, Founders, Outreach tabs
-4. Go to **Opportunities** — ranked by fit score, filter by category
-5. Go to **Outreach** — copy LinkedIn/email/Twitter messages with one click
-6. Go to **CRM** — drag contacts through the pipeline (Not Contacted → Offer)
-
----
-
-## Build Order (Progress)
-
-- [x] Phase 1: Foundation — docker-compose, models, alembic, FastAPI skeleton
-- [x] Phase 2: Tools + Agent 1 — Tavily/Firecrawl/Jina wrappers, discovery agent, ARQ worker
-- [x] Phase 3: Agents 2 + 3 — company intelligence + opportunity detection
-- [x] Phase 4: Agents 4 + 5 — skill matching + proof-of-work generation
-- [x] Phase 5: Agents 6 + 7 + 8 — founder research + narrative + CRM
-- [x] Phase 6: Frontend — all pages, Kanban board, copy buttons, React Query polling
-- [x] Phase 7: Hardening — rate limiting, retries, dedup, error states
-
----
-
-## What Makes This Different
-
-Most job tools optimize for **finding openings**.
-
-This optimizes for **creating openings**.
-
-The pipeline reinforces:
-
+To run PostgreSQL container:
+```bash
+docker compose up -d postgres
 ```
-Skills → Build prototype
-Visibility → Publish build log
-Opportunity → Target startup
-Consistency → Run every week
-```
-
----
-
-## License
-
-MIT
