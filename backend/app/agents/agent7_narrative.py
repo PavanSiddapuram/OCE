@@ -76,6 +76,13 @@ async def run_narrative(company_id: str, resume_text: str) -> None:
     founder_complaint = (top_founder.complaints[0] if top_founder and top_founder.complaints else None)
     founder_insight = (top_founder.raw_research.get("key_insight") if top_founder and top_founder.raw_research else None)
 
+    # Tailor resume to the top opportunity's required skills for tighter narrative
+    opp_skills  = list(top_opp.skills_required or []) if top_opp else []
+    opp_domains = [top_opp.category] if top_opp and top_opp.category else []
+    from app.utils.resume_tailor import tailor_resume
+    tailored = tailor_resume(opp_skills, opp_domains)
+    effective_resume = tailored if tailored else resume_text[:3000]
+
     prompt = f"""
 Company: {company.name}
 Mission: {company.mission or ""}
@@ -90,8 +97,8 @@ Founder: {top_founder.name if top_founder else "Unknown"}
 Founder Complaint: {founder_complaint or "Not found"}
 Key Insight: {founder_insight or "Not found"}
 
-Engineer's Resume (abbreviated):
-{resume_text[:3000]}
+Engineer's Background (tailored to this opportunity):
+{effective_resume}
 
 Write outreach messages for LinkedIn, email, and Twitter DM.
 Reference the founder's complaint in the hook. Reference the PoW project in what_i_built.

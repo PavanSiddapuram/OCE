@@ -64,9 +64,16 @@ async def run_skill_match(company_id: str, resume_text: str) -> list[uuid.UUID]:
         for i, o in enumerate(opportunities, start=1)
     )
 
+    # Tailor resume to the skills mentioned across all opportunities
+    all_skills  = [s for o in opportunities for s in (o.skills_required or [])]
+    all_domains = list({o.category for o in opportunities if o.category})
+    from app.utils.resume_tailor import tailor_resume
+    tailored = tailor_resume(all_skills, all_domains)
+    effective_resume = tailored if tailored else resume_text
+
     prompt = f"""
 Engineer's Resume:
-{resume_text}
+{effective_resume}
 
 Opportunities to score:
 {opp_descriptions}
