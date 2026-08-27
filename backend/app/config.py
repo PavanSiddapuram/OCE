@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     max_companies_per_run: int = 20
     top_opportunities_for_pow: int = 5
 
+    # Comma-separated extra CORS origins, for AlgoReal's deployed URL once
+    # it's hosted (e.g. "https://algoreal.vercel.app"). Localhost is always
+    # allowed regardless of this setting.
+    extra_cors_origins: str = ""
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
