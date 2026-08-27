@@ -5,6 +5,7 @@ from app.models.research import Research
 from app.models.contact import Contact
 from app.models.outreach import Outreach
 from app.models.pipeline_run import PipelineRun
+from app.models.app_state import AppState
 
 __all__ = [
     "Company",
@@ -14,4 +15,5 @@ __all__ = [
     "Contact",
     "Outreach",
     "PipelineRun",
+    "AppState",
 ]
