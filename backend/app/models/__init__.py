@@ -6,6 +6,7 @@ from app.models.contact import Contact
 from app.models.outreach import Outreach
 from app.models.pipeline_run import PipelineRun
 from app.models.app_state import AppState
+from app.models.hiring_intelligence import HiringProspect, HiringRun
 
 __all__ = [
     "Company",
@@ -16,4 +17,6 @@ __all__ = [
     "Outreach",
     "PipelineRun",
     "AppState",
+    "HiringProspect",
+    "HiringRun",
 ]
