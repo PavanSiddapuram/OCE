@@ -76,6 +76,14 @@ class EvidenceGateTests(unittest.TestCase):
         self.assertFalse(result.qualifies)
         self.assertIn("location_not_verified_for_target", result.reasons)
 
+    def test_remote_role_restricted_to_us_is_rejected(self):
+        result = evaluate_hiring_evidence(
+            self.evidence(role_location="Remote — US only; US work authorization required"),
+            today=self.today,
+        )
+        self.assertFalse(result.qualifies)
+        self.assertIn("location_not_verified_for_target", result.reasons)
+
     def test_weighted_score_and_freshness(self):
         total, parts = score_prospect(
             technical_fit=1.0,
