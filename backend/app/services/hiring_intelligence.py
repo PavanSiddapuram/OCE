@@ -102,10 +102,24 @@ def evaluate_hiring_evidence(
 
     location = evidence.role_location.casefold()
     target = target_location.casefold()
-    if not location or not any(
+    explicitly_restricted = any(
         marker in location
-        for marker in (target, "remote", "hybrid", "work from anywhere")
-    ):
+        for marker in (
+            "us only",
+            "usa only",
+            "united states only",
+            "must be based in the us",
+            "must be located in the us",
+            "us work authorization required",
+            "us work authorization only",
+        )
+    )
+    target_matches = target in location
+    remote_eligible = any(
+        marker in location
+        for marker in ("remote", "hybrid", "work from anywhere")
+    )
+    if explicitly_restricted or not location or not (target_matches or remote_eligible):
         reasons.append("location_not_verified_for_target")
 
     if evidence.direct_job_listing and evidence.expansion_signal:
