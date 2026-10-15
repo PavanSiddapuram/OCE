@@ -1,6 +1,6 @@
 """Safe, deterministic hiring-intelligence evaluation endpoints."""
-from datetime import date
-from urllib.parse import urlparse
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter
 from pydantic import HttpUrl
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/hiring-intelligence", tags=["hiring-intelligence"])
 @router.post("/dry-run", response_model=HiringDryRunResponse)
 async def dry_run_hiring_intelligence(payload: HiringDryRunRequest) -> HiringDryRunResponse:
     """Evaluate supplied, source-backed candidates without database or external side effects."""
-    as_of_date = payload.as_of_date or date.today()
+    as_of_date = payload.as_of_date or datetime.now(ZoneInfo("Asia/Kolkata")).date()
     results: list[HiringDryRunItem] = []
     seen_urls: set[str] = set()
 
