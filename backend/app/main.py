@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api import app_state, companies, contacts, crm, opportunities, outreach, pipeline
+from app.api import app_state, companies, contacts, crm, hiring_intelligence, opportunities, outreach, pipeline
 from app.config import settings
 from app.limiter import limiter
 
@@ -39,6 +39,7 @@ app.include_router(contacts.router, prefix="/api")
 app.include_router(outreach.router, prefix="/api")
 app.include_router(crm.router, prefix="/api")
 app.include_router(app_state.router, prefix="/api")
+app.include_router(hiring_intelligence.router, prefix="/api")
 
 
 @app.get("/health")
