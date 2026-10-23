@@ -2,16 +2,21 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from app.config import settings
+from app.database import Base
+import app.models  # noqa: F401 -- register every ORM model with metadata
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import all models so Alembic can detect them
-from app.database import Base  # noqa: F401
-import app.models  # noqa: F401
+# Keep migrations pointed at the same database as the application. Alembic's
+# static ini URL otherwise silently ignores DATABASE_URL from .env / Compose.
+# Escape percent signs because ConfigParser treats them as interpolation tokens.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
