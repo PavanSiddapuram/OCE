@@ -1,4 +1,11 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
+
+
+# Resolve the repository-root .env independently of the caller's working directory.
+# In Docker, Compose injects values through the process environment instead.
+_ROOT_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
@@ -6,8 +13,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # DeepSeek — sole LLM provider for all 8 agents
-    # "deepseek-chat" is DeepSeek's always-latest alias (V3 today, V4 when released)
-    # Override with DEEPSEEK_MODEL=deepseek-chat in .env to pin a specific version
+    # "deepseek-chat" is DeepSeek's always-latest alias (deepseek-chat).
     deepseek_api_key: str = ""
     deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com"
@@ -19,12 +25,10 @@ class Settings(BaseSettings):
     max_companies_per_run: int = 20
     top_opportunities_for_pow: int = 5
 
-    # Comma-separated extra CORS origins, for AlgoReal's deployed URL once
-    # it's hosted (e.g. "https://algoreal.vercel.app"). Localhost is always
-    # allowed regardless of this setting.
+    # Comma-separated extra CORS origins for deployed frontends.
     extra_cors_origins: str = ""
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"env_file": _ROOT_ENV_FILE, "extra": "ignore"}
 
 
 settings = Settings()
