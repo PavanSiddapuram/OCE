@@ -6,7 +6,7 @@ OCE is being built for ambitious engineers who want more than another applicatio
 
 The ambition is simple: help talented people find places where their work can matter early — where the team is small, the problems are real, and ownership is something you can earn rather than wait years for.
 
-[Explore the code](https://github.com/PavanSiddapuram/OCE) · [Setup guide](#getting-started) · [Current status](#where-the-project-stands)
+[Explore the code](https://github.com/PavanSiddapuram/OCE) · [AI FDE harness](docs/ai-fde-bengaluru-harness.md) · [Setup guide](#getting-started) · [Current status](#where-the-project-stands)
 
 ---
 
