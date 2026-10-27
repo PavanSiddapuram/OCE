@@ -6,7 +6,7 @@ OCE is being built for ambitious engineers who want more than another applicatio
 
 The ambition is simple: help talented people find places where their work can matter early — where the team is small, the problems are real, and ownership is something you can earn rather than wait years for.
 
-[Explore the code](https://github.com/PavanSiddapuram/OCE) · [Setup guide](#getting-started) · [Current status](#where-the-project-stands)
+[Explore the code](https://github.com/PavanSiddapuram/OCE) · [AI FDE harness](docs/ai-fde-bengaluru-harness.md) · [Setup guide](#getting-started) · [Current status](#where-the-project-stands)
 
 ---
 
@@ -80,9 +80,13 @@ AI-generated research and ideas are starting points, not unquestionable facts. A
 
 ---
 
-## A second track: Daily Hiring Intelligence
+## The focused hiring track: AI FDEs in Bengaluru
 
-OCE is also being extended toward a more direct workflow: finding **fresh, relevant engineering job listings** and ranking them using transparent evidence and fit signals.
+The hiring-intelligence track is being narrowed to **AI Forward Deployed Engineer roles and funded AI startups in Bengaluru**. It prioritizes hands-on engineers who work with customers, build AI integrations, deploy systems into production, and own real outcomes — not generic software openings or pre-sales-only roles.
+
+OCE will keep two distinct lanes: (1) verified open FDE roles and (2) funded, customer-deployed AI companies worth approaching when no FDE vacancy is verified. The second lane is a proactive outreach target, never a fabricated job opening. The complete proposed policy and architecture are documented in [the AI FDE hiring harness specification](docs/ai-fde-hiring-harness.md).
+
+The intended workflow is to find **fresh, relevant FDE listings** and rank them using transparent evidence and fit signals.
 
 The intended flow is:
 
